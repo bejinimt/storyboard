@@ -19,19 +19,31 @@ function initPool() {
   });
 
   document.addEventListener("click", e => {
-    if (e.target.classList.contains("close")) {
-      const el = e.target.parentElement;
-      previousPositions.set(el, {
-        left: el.style.left,
-        top: el.style.top
-      });
+  if (!e.target.classList.contains("close")) return;
 
-      el.style.position = "relative";
-      el.style.left = "";
-      el.style.top = "";
+  const el = e.target.parentElement;
 
-      pool.appendChild(el);
-      makeDraggable(el, pool);
-    }
+  // Prüfen, ob Element im Pool ist
+  const isInPool = el.parentElement.id === "pool";
+
+  if (isInPool) {
+    // ⭐ Element dauerhaft löschen
+    el.remove();
+    return;
+  }
+
+  // ⭐ Element kommt aus dem Storyboard → in den Pool verschieben
+  previousPositions.set(el, {
+    left: el.style.left,
+    top: el.style.top
   });
+
+  el.style.position = "relative";
+  el.style.left = "";
+  el.style.top = "";
+
+  pool.appendChild(el);
+  makeDraggable(el, pool);
+});
+
 }
