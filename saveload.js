@@ -1,3 +1,4 @@
+// saveLoad.js
 function initSaveLoad() {
   const saveBtn = document.getElementById("saveBtn");
   const loadBtn = document.getElementById("loadBtn");
@@ -5,6 +6,27 @@ function initSaveLoad() {
 
   const storyboard = document.getElementById("storyboard");
   const pool = document.getElementById("pool");
+  const recentList = document.getElementById("recentList");
+
+  // Liste der zuletzt gespeicherten Dateien (nur im Speicher)
+  let recentFiles = [];
+
+  function renderRecentList() {
+    recentList.innerHTML = "";
+    recentFiles.forEach(filename => {
+      const li = document.createElement("li");
+      li.style.cursor = "pointer";
+      li.textContent = filename;
+
+      li.addEventListener("click", () => {
+        // Browser darf nicht automatisch laden – Nutzer muss Datei auswählen
+        loadFile.value = "";
+        loadFile.click();
+      });
+
+      recentList.appendChild(li);
+    });
+  }
 
   // -----------------------------
   // SPEICHERN
@@ -44,15 +66,11 @@ function initSaveLoad() {
     const a = document.createElement("a");
     a.href = url;
 
-    // -----------------------------
-    // DATEINAME MIT DATUM + UHRZEIT
-    // -----------------------------
+    // Dateiname mit Datum + Uhrzeit
     const now = new Date();
-
     const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, "0");
     const dd = String(now.getDate()).padStart(2, "0");
-
     const hh = String(now.getHours()).padStart(2, "0");
     const min = String(now.getMinutes()).padStart(2, "0");
     const ss = String(now.getSeconds()).padStart(2, "0");
@@ -61,18 +79,36 @@ function initSaveLoad() {
 
     a.download = filename;
     a.click();
-
     URL.revokeObjectURL(url);
+
+    // Dateiname in die In‑Memory‑Liste aufnehmen
+    recentFiles.unshift(filename);
+    recentFiles = recentFiles.slice(0, 10);
+    renderRecentList();
+
+    // Zusätzlich eine Index‑Datei mit allen Namen anbieten
+    const indexBlob = new Blob([JSON.stringify(recentFiles, null, 2)], {
+      type: "application/json"
+    });
+    const indexUrl = URL.createObjectURL(indexBlob);
+    const indexLink = document.createElement("a");
+    indexLink.href = indexUrl;
+    indexLink.download = "storyboard_index.json";
+    indexLink.click();
+    URL.revokeObjectURL(indexUrl);
   });
 
   // -----------------------------
-  // LADEN
+  // LADEN (Button)
   // -----------------------------
   loadBtn.addEventListener("click", () => {
     loadFile.value = "";
     loadFile.click();
   });
 
+  // -----------------------------
+  // LADEN (Datei ausgewählt)
+  // -----------------------------
   loadFile.addEventListener("change", async e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -109,4 +145,7 @@ function initSaveLoad() {
       }
     });
   });
+
+  // Initial leere Liste rendern
+  renderRecentList();
 }
